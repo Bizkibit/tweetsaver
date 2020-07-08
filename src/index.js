@@ -45,10 +45,13 @@ class App extends React.Component {
   onDragEnd = result => {
     const { destination, source, draggableId } = result;
 
+
+    //case the destination of drag is outside of a draggable 
     if (!destination) {
       return;
     }
 
+    //case where item was dragged and droped at the same spot
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
@@ -59,11 +62,25 @@ class App extends React.Component {
     const start = this.state.columns[source.droppableId];
     const finish = this.state.columns[destination.droppableId];
 
+    //case where item is being dragged within the same list
     if (start === finish) {
       const column = start;
       const newTaskIds = Array.from(column.taskIds);
       newTaskIds.splice(source.index, 1);
       newTaskIds.splice(destination.index, 0, draggableId);
+
+      //check if its being moved within saved list
+      if (start.id === 'column-2') {
+        const {tasks} = this.state;
+        const savedTasks = {};
+        newTaskIds.forEach(id => savedTasks[id] = tasks[id])
+
+        const stringifyIds = JSON.stringify(newTaskIds);
+        const stringifyTasks = JSON.stringify(savedTasks);
+
+        localStorage.setItem('savedIds', stringifyIds);
+        localStorage.setItem('savedTasks', stringifyTasks);
+      }
 
       const newColumn = {
         ...column,
@@ -80,6 +97,8 @@ class App extends React.Component {
 
       this.setState(newState);
     } else {
+
+      //case where item is being moved between lists
       const startTaskIds = Array.from(start.taskIds);
       startTaskIds.splice(source.index, 1);
 
@@ -96,6 +115,28 @@ class App extends React.Component {
         taskIds: finishTaskIds
       };
 
+      const {tasks} = this.state;
+      // case where items are being removed from saved column
+      if (start.id === 'column-2') {
+        const savedTasks = {};
+        startTaskIds.forEach(id => savedTasks[id] = tasks[id])
+
+        const stringifyIds = JSON.stringify(startTaskIds);
+        const stringifyTasks = JSON.stringify(savedTasks);
+
+        localStorage.setItem('savedIds', stringifyIds);
+        localStorage.setItem('savedTasks', stringifyTasks);
+      } else {
+        const savedTasks = {};
+        finishTaskIds.forEach(id => savedTasks[id] = tasks[id])
+
+        const stringifyIds = JSON.stringify(finishTaskIds);
+        const stringifyTasks = JSON.stringify(savedTasks);
+
+        localStorage.setItem('savedIds', stringifyIds);
+        localStorage.setItem('savedTasks', stringifyTasks);
+      }
+
       const newState = {
         ...this.state,
         columns: {
@@ -109,27 +150,43 @@ class App extends React.Component {
   };
 
   readSavedTweets = () => {
-    const tasks = {
+    //init some tasks
+    const mockTasks = {
       "task-1": { id: "task-1", content: "something-1" },
       "task-2": { id: "task-2", content: "something-2" },
       "task-3": { id: "task-3", content: "something-3" },
       "task-4": { id: "task-4", content: "something-4" },
       "task-5": { id: "task-5", content: "something-5" }
     };
+    localStorage.setItem('savedTasks', JSON.stringify(mockTasks));
+
     //read saved tweets from local storage
     new Promise(resolve => {
-      setTimeout(() => resolve(tasks), 500);
-    }).then(response => {
+      setTimeout(() => {
+        const tasks = JSON.parse(localStorage.getItem('savedTasks'));
+        const tasksIds = JSON.parse(localStorage.getItem('savedIds'));
+        resolve({tasks, tasksIds})
+      }, 500);
+    }).then(({tasks, tasksIds}) => {
+
+      const savedIds = tasksIds || [];
+
       const savedColumn = {
         ...this.state.columns["column-2"],
-        taskIds: Object.keys(response)
+        taskIds: savedIds
+      };
+
+      const regColumn = {
+        ...this.state.columns["column-1"],
+        taskIds: Object.keys(tasks).filter(key => !savedIds.includes(key))
       };
 
       this.setState({
-        tasks: { ...response },
+        tasks: { ...tasks },
         columns: {
           ...this.state.columns,
-          "column-2": savedColumn
+          "column-1": regColumn,
+          "column-2": savedColumn,
         }
       });
     });
@@ -144,7 +201,7 @@ class App extends React.Component {
       <DragDropContext
         // onDragStart
         // onDragUpdate
-        //required
+        //onDragEnd required
         onDragEnd={this.onDragEnd}
       >
         <Container>

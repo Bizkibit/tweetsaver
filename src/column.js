@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import Task from './task';
+import { Droppable } from "react-beautiful-dnd";
+import Task from "./task";
 
 const Container = styled.div`
   margin: 8px;
@@ -21,11 +22,24 @@ export default class Column extends React.Component {
       <Container>
         {/* this is where the searchbar component will go */}
         <Title>{this.props.column.title}</Title>
-        <TaskList>
-          {this.props.tasks.map(task => (
-            <Task key={task.id} task={task} />
-          ))}
-        </TaskList>
+        {/* wrappes the droppable area */}
+        <Droppable
+          //has one req props which is id
+          droppableId={this.props.column.id}
+        >
+          {/* Droppable uses renderProps and expects its children to a function returning JSX */}
+          {/* the function takes 2 args: 1. provided (obj) */}
+          {provided => {
+            return (
+              <TaskList {...provided.droppableProps} ref={provided.innerRef}>
+                {this.props.tasks.map((task, index) => (
+                  <Task key={task.id} task={task} index={index} />
+                ))}
+                {provided.placeholder}
+              </TaskList>
+            );
+          }}
+        </Droppable>
       </Container>
     );
   }

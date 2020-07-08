@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import styled from "styled-components";
-import initialData from "./initial-data";
+// import initialData from "./initial-data";
 import Column from "./column";
 import { DragDropContext } from "react-beautiful-dnd";
 
@@ -10,12 +10,39 @@ const Container = styled.div`
 `;
 
 class App extends React.Component {
-  state = initialData;
+  state = {
+    tasks: {
+      // "task-1": { id: "task-1", content: "something-1" },
+      // "task-2": { id: "task-2", content: "something-2" },
+      // "task-3": { id: "task-3", content: "something-3" },
+      // "task-4": { id: "task-4", content: "something-4" },
+      // "task-5": { id: "task-5", content: "something-5" }
+    },
+    columns: {
+      "column-1": {
+        id: "column-1",
+        title: "Tweets",
+        //indicated owndership
+        //maintain order
+        taskIds: []
+        // taskIds: ["task-1", "task-2", "task-3", "task-4", "task-5"]
+      },
+      "column-2": {
+        id: "column-2",
+        title: "Saved tweets",
+        //indicated owndership
+        //maintain order
+        taskIds: []
+      }
+    },
+
+    //order of columns
+    columnOrder: ["column-1", "column-2"]
+  };
+  // state = initialData;
 
   //callback for handling dropping action
   onDragEnd = result => {
-    console.log(result);
-    debugger
     const { destination, source, draggableId } = result;
 
     if (!destination) {
@@ -37,12 +64,12 @@ class App extends React.Component {
       const newTaskIds = Array.from(column.taskIds);
       newTaskIds.splice(source.index, 1);
       newTaskIds.splice(destination.index, 0, draggableId);
-  
+
       const newColumn = {
         ...column,
         taskIds: newTaskIds
       };
-  
+
       const newState = {
         ...this.state,
         columns: {
@@ -50,7 +77,7 @@ class App extends React.Component {
           [newColumn.id]: newColumn
         }
       };
-  
+
       this.setState(newState);
     } else {
       const startTaskIds = Array.from(start.taskIds);
@@ -79,8 +106,38 @@ class App extends React.Component {
       };
       this.setState(newState);
     }
-
   };
+
+  readSavedTweets = () => {
+    const tasks = {
+      "task-1": { id: "task-1", content: "something-1" },
+      "task-2": { id: "task-2", content: "something-2" },
+      "task-3": { id: "task-3", content: "something-3" },
+      "task-4": { id: "task-4", content: "something-4" },
+      "task-5": { id: "task-5", content: "something-5" }
+    };
+    //read saved tweets from local storage
+    new Promise(resolve => {
+      setTimeout(() => resolve(tasks), 500);
+    }).then(response => {
+      const savedColumn = {
+        ...this.state.columns["column-2"],
+        taskIds: Object.keys(response)
+      };
+
+      this.setState({
+        tasks: { ...response },
+        columns: {
+          ...this.state.columns,
+          "column-2": savedColumn
+        }
+      });
+    });
+  };
+
+  componentDidMount() {
+    this.readSavedTweets();
+  }
 
   render() {
     return (

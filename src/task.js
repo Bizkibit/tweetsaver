@@ -7,6 +7,7 @@ const Container = styled.div`
   padding: 8px;
   margin-bottom: 8px;
   border-radius: 2px;
+  background-color: white;
 `;
 
 export default class Task extends React.Component {

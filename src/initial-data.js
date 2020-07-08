@@ -12,7 +12,7 @@ const initialData = {
             title: 'To do',
             //indicated owndership
             //maintain order
-            tasksIds: ['task-1', 'task-2', 'task-3', 'task-4', 'task-5']
+            taskIds: ['task-1', 'task-2', 'task-3', 'task-4', 'task-5']
         }
     },
 

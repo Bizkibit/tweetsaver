@@ -196,6 +196,10 @@ class App extends React.Component {
     this.readSavedTweets();
   }
 
+  onSearch = (phrase) => {
+    console.log('Searching !!', phrase)
+  }
+
   render() {
     return (
       <DragDropContext
@@ -210,8 +214,15 @@ class App extends React.Component {
             const tasks = column.taskIds.map(
               taskId => this.state.tasks[taskId]
             );
+
+            const props = {
+              key: column.id,
+              column,
+              tasks,
+              ...(column.id === 'column-1' && {onSearch: this.onSearch})
+            }
             // return column.title;
-            return <Column key={column.id} column={column} tasks={tasks} />;
+            return <Column {...props}/>;
           })}
         </Container>
       </DragDropContext>

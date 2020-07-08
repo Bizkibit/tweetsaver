@@ -21,12 +21,39 @@ const TaskList = styled.div`
 `;
 
 export default class Column extends React.Component {
+
+  state = {value : ''}
+
+  handleSearch = () => {
+    this.props.onSearch(this.state.value);
+  }
+
+  handleChange = (event) => {
+    this.setState({value: event.target.value})
+  }
+
   render() {
     // return this.props.column.title
     return (
       <Container>
         {/* this is where the searchbar component will go */}
-        <Title>{this.props.column.title}</Title>
+        {this.props.column.id === "column-1" ? (
+          <React.Fragment>
+            <input
+              value={this.state.value}
+              onChange={this.handleChange}
+              // id={this.props.column.id}
+              placeholder={this.props.column.title}
+            ></input>
+            <button
+              onClick={this.handleSearch}
+            >
+              <span>search</span>
+            </button>
+          </React.Fragment>
+        ) : (
+          <Title>{this.props.column.title}</Title>
+        )}
         {/* wrappes the droppable area */}
         <Droppable
           //has one req props which is id

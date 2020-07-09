@@ -139,6 +139,8 @@ class App extends React.Component {
       <DragDropContext
         onDragEnd={this.onDragEnd}
       >
+        <h1>Tweet Saver</h1>
+        <hr />
         <Container>
           {this.state.columnOrder.map(columnId => {
             const { [columnId]: column } = this.state.columns;

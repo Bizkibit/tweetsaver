@@ -3,7 +3,8 @@ import ReactDOM from "react-dom";
 import styled from "styled-components";
 import { DragDropContext } from "react-beautiful-dnd";
 import Column from "./components/column";
-import { searchTweet } from './api';
+import { searchTweet } from "./api";
+import { prepareNewColumns } from "./utils/prepareNewColumns";
 
 const Container = styled.div`
   display: flex;
@@ -13,12 +14,12 @@ class App extends React.Component {
   state = {
     tweets: {},
     columns: {
-      "tweets": {
+      tweets: {
         id: "tweets",
         title: "Tweets",
         tweetIds: []
       },
-      "saved": {
+      saved: {
         id: "saved",
         title: "Saved tweets",
         tweetIds: []
@@ -29,10 +30,10 @@ class App extends React.Component {
 
   //callback for handling dropping action
   onDragEnd = result => {
-    const { destination, source, draggableId } = result;
+    const { destination, source } = result;
+    const { columns, tweets } = this.state;
 
-
-    //case the destination of drag is outside of a draggable 
+    //case the destination of drag is outside of a draggable
     if (!destination) {
       return;
     }
@@ -45,105 +46,51 @@ class App extends React.Component {
       return;
     }
 
-    const start = this.state.columns[source.droppableId];
-    const finish = this.state.columns[destination.droppableId];
+    const { newStart, newFinish, newTweetIds } = prepareNewColumns(
+      columns,
+      result
+    );
 
-    //case where item is being dragged within the same list
-    if (start === finish) {
-      const column = start;
-      const newTaskIds = Array.from(column.tweetIds);
-      newTaskIds.splice(source.index, 1);
-      newTaskIds.splice(destination.index, 0, draggableId);
-
-      //check if its being moved within saved list
-      if (start.id === 'saved') {
-        const {tweets} = this.state;
-        const savedTweets = {};
-        newTaskIds.forEach(id => savedTweets[id] = tweets[id])
-
-        const stringifyIds = JSON.stringify(newTaskIds);
-        const stringifyTasks = JSON.stringify(savedTweets);
-
-        localStorage.setItem('savedIds', stringifyIds);
-        localStorage.setItem('savedTweets', stringifyTasks);
+    const newState = {
+      ...this.state,
+      columns: {
+        ...this.state.columns,
+        [newStart.id]: newStart,
+        ...(newFinish && { [newFinish.id]: newFinish })
       }
+    };
 
-      const newColumn = {
-        ...column,
-        tweetIds: newTaskIds
-      };
+    this.setState(newState);
 
-      const newState = {
-        ...this.state,
-        columns: {
-          ...this.state.columns,
-          [newColumn.id]: newColumn
-        }
-      };
+    //saving new tweet ids 
+    //currently tweet obj are being saved so it can be read on init
+    //it can be removed once the init read tweets is implemented.
+    if (
+      destination.droppableId === "saved" ||
+      destination.droppableId !== source.droppableId
+    ) {
+      const savedTweets = {};
+      newTweetIds.forEach(id => (savedTweets[id] = tweets[id]));
 
-      this.setState(newState);
-    } else {
+      const stringifyIds = JSON.stringify(newTweetIds);
+      const stringifyTweets = JSON.stringify(savedTweets);
 
-      //case where item is being moved between lists
-      const startTaskIds = Array.from(start.tweetIds);
-      startTaskIds.splice(source.index, 1);
-
-      const newStart = {
-        ...start,
-        tweetIds: startTaskIds
-      };
-
-      const finishTaskIds = Array.from(finish.tweetIds);
-      finishTaskIds.splice(destination.index, 0, draggableId);
-
-      const newFinish = {
-        ...finish,
-        tweetIds: finishTaskIds
-      };
-
-      const {tweets} = this.state;
-      // case where items are being removed from saved column
-      if (start.id === 'saved') {
-        const savedTweets = {};
-        startTaskIds.forEach(id => savedTweets[id] = tweets[id])
-
-        const stringifyIds = JSON.stringify(startTaskIds);
-        const stringifyTasks = JSON.stringify(savedTweets);
-
-        localStorage.setItem('savedIds', stringifyIds);
-        localStorage.setItem('savedTweets', stringifyTasks);
-      } else {
-        const savedTweets = {};
-        finishTaskIds.forEach(id => savedTweets[id] = tweets[id])
-
-        const stringifyIds = JSON.stringify(finishTaskIds);
-        const stringifyTasks = JSON.stringify(savedTweets);
-
-        localStorage.setItem('savedIds', stringifyIds);
-        localStorage.setItem('savedTweets', stringifyTasks);
-      }
-
-      const newState = {
-        ...this.state,
-        columns: {
-          ...this.state.columns,
-          [newStart.id]: newStart,
-          [newFinish.id]: newFinish
-        }
-      };
-      this.setState(newState);
+      localStorage.setItem("savedIds", stringifyIds);
+      localStorage.setItem("savedTweets", stringifyTweets);
     }
   };
 
   readSavedTweets = () => {
     //read saved tweets from local storage
+    //currently the tweet objects are being saved and read from localStorage
+    //this can be furthere optimized to only save the tweetids and on init a
+    // api call to be made to retrieve these tweets and update the state.
     new Promise(resolve => {
-        const tweets = JSON.parse(localStorage.getItem('savedTweets'));
-        const tasksIds = JSON.parse(localStorage.getItem('savedIds'));
-        resolve({tweets, tasksIds})
-    }).then(({tweets, tasksIds}) => {
-
-      const savedIds = tasksIds || [];
+      const tweets = JSON.parse(localStorage.getItem("savedTweets"));
+      const tweetIds = JSON.parse(localStorage.getItem("savedIds"));
+      resolve({ tweets, tweetIds });
+    }).then(({ tweets, tweetIds }) => {
+      const savedIds = tweetIds || [];
 
       const savedColumn = {
         ...this.state.columns["saved"],
@@ -154,7 +101,7 @@ class App extends React.Component {
         tweets: { ...tweets },
         columns: {
           ...this.state.columns,
-          "saved": savedColumn,
+          saved: savedColumn
         }
       });
     });
@@ -164,27 +111,27 @@ class App extends React.Component {
     this.readSavedTweets();
   }
 
-  onSearch = (phrase) => {
+  onSearch = phrase => {
     searchTweet(phrase)
-    .then((tweets = {}) => {
-      const newState = {
-        tweets: {
-          ...this.state.tweets,
-          ...tweets
-        },
-        columns: {
-          ...this.state.columns,
-          'tweets': {
-            ...this.state.columns['tweets'],
-            tweetIds: Object.keys(tweets),
+      .then((tweets = {}) => {
+        const newState = {
+          tweets: {
+            ...this.state.tweets,
+            ...tweets
+          },
+          columns: {
+            ...this.state.columns,
+            tweets: {
+              ...this.state.columns["tweets"],
+              tweetIds: Object.keys(tweets)
+            }
           }
-        }
-      }
+        };
 
-      this.setState(newState)
-    }
-    ).catch(console.error)
-  }
+        this.setState(newState);
+      })
+      .catch(console.error);
+  };
 
   render() {
     return (
@@ -198,16 +145,16 @@ class App extends React.Component {
           {this.state.columnOrder.map(columnId => {
             const { [columnId]: column } = this.state.columns;
             const tweets = column.tweetIds.map(
-              taskId => this.state.tweets[taskId]
+              tweetId => this.state.tweets[tweetId]
             );
 
             const props = {
               key: column.id,
               column,
               tweets,
-              ...(column.id === 'tweets' && {onSearch: this.onSearch})
-            }
-            return <Column {...props}/>;
+              ...(column.id === "tweets" && { onSearch: this.onSearch })
+            };
+            return <Column {...props} />;
           })}
         </Container>
       </DragDropContext>

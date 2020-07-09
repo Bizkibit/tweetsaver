@@ -151,14 +151,14 @@ class App extends React.Component {
 
   readSavedTweets = () => {
     //init some tasks
-    const mockTasks = {
-      "task-1": { id: "task-1", content: "something-1" },
-      "task-2": { id: "task-2", content: "something-2" },
-      "task-3": { id: "task-3", content: "something-3" },
-      "task-4": { id: "task-4", content: "something-4" },
-      "task-5": { id: "task-5", content: "something-5" }
-    };
-    localStorage.setItem('savedTasks', JSON.stringify(mockTasks));
+    // const mockTasks = {
+    //   "task-1": { id: "task-1", content: "something-1" },
+    //   "task-2": { id: "task-2", content: "something-2" },
+    //   "task-3": { id: "task-3", content: "something-3" },
+    //   "task-4": { id: "task-4", content: "something-4" },
+    //   "task-5": { id: "task-5", content: "something-5" }
+    // };
+    // localStorage.setItem('savedTasks', JSON.stringify(mockTasks));
 
     //read saved tweets from local storage
     new Promise(resolve => {
@@ -178,7 +178,8 @@ class App extends React.Component {
 
       const regColumn = {
         ...this.state.columns["column-1"],
-        taskIds: Object.keys(tasks).filter(key => !savedIds.includes(key))
+        taskIds:[]
+        // taskIds: Object.keys(tasks).filter(key => !savedIds.includes(key))
       };
 
       this.setState({
@@ -197,7 +198,41 @@ class App extends React.Component {
   }
 
   onSearch = (phrase) => {
-    console.log('Searching !!', phrase)
+    fetch('/api/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: phrase }),
+    }).then(res => res.json())
+    .then(({data = {}}) => {
+      const { statuses = [] } = data;
+      const tasks = {};
+      statuses.map(status => {
+        const {id_str: id, text: content} = status;
+        return {
+          id,
+          content,
+        }
+      }).forEach(status => tasks[status.id] = status)
+
+      const newState = {
+        tasks: {
+          ...this.state.tasks,
+          ...tasks
+        },
+        columns: {
+          ...this.state.columns,
+          'column-1': {
+            ...this.state.columns['column-1'],
+            taskIds: Object.keys(tasks),
+          }
+        }
+      }
+
+      this.setState(newState)
+    }
+    ).catch(console.error)
   }
 
   render() {

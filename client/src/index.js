@@ -136,9 +136,6 @@ class App extends React.Component {
   render() {
     return (
       <DragDropContext
-        // onDragStart
-        // onDragUpdate
-        //onDragEnd required
         onDragEnd={this.onDragEnd}
       >
         <Container>

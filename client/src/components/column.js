@@ -33,11 +33,9 @@ export default class Column extends React.Component {
   }
 
   render() {
-    // return this.props.column.title
     return (
       <Container>
-        {/* this is where the searchbar component will go */}
-        {this.props.column.id === "column-1" ? (
+        {this.props.column.id === "tweets" ? (
           <React.Fragment>
             <input
               value={this.state.value}
@@ -59,12 +57,12 @@ export default class Column extends React.Component {
           //has one req props which is id
           droppableId={this.props.column.id}
         >
-          {/* Droppable uses renderProps and expects its children to a function returning JSX */}
-          {/* the function takes 2 args: 1. provided (obj) */}
+          {/* Droppable uses renderProps and expects its children to be a function returning JSX */}
+          {/* the function takes a single arg: provided (obj) */}
           {provided => {
             return (
               <TaskList {...provided.droppableProps} ref={provided.innerRef}>
-                {this.props.tasks.map((task, index) => (
+                {this.props.tweets.map((task, index) => (
                   <Task key={task.id} task={task} index={index} />
                 ))}
                 {provided.placeholder}

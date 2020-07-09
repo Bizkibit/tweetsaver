@@ -1,9 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import styled from "styled-components";
-// import initialData from "./initial-data";
-import Column from "./column";
 import { DragDropContext } from "react-beautiful-dnd";
+import Column from "./components/column";
+import { searchTweet } from './api';
 
 const Container = styled.div`
   display: flex;
@@ -11,35 +11,21 @@ const Container = styled.div`
 
 class App extends React.Component {
   state = {
-    tasks: {
-      // "task-1": { id: "task-1", content: "something-1" },
-      // "task-2": { id: "task-2", content: "something-2" },
-      // "task-3": { id: "task-3", content: "something-3" },
-      // "task-4": { id: "task-4", content: "something-4" },
-      // "task-5": { id: "task-5", content: "something-5" }
-    },
+    tweets: {},
     columns: {
-      "column-1": {
-        id: "column-1",
+      "tweets": {
+        id: "tweets",
         title: "Tweets",
-        //indicated owndership
-        //maintain order
-        taskIds: []
-        // taskIds: ["task-1", "task-2", "task-3", "task-4", "task-5"]
+        tweetIds: []
       },
-      "column-2": {
-        id: "column-2",
+      "saved": {
+        id: "saved",
         title: "Saved tweets",
-        //indicated owndership
-        //maintain order
-        taskIds: []
+        tweetIds: []
       }
     },
-
-    //order of columns
-    columnOrder: ["column-1", "column-2"]
+    columnOrder: ["tweets", "saved"]
   };
-  // state = initialData;
 
   //callback for handling dropping action
   onDragEnd = result => {
@@ -65,26 +51,26 @@ class App extends React.Component {
     //case where item is being dragged within the same list
     if (start === finish) {
       const column = start;
-      const newTaskIds = Array.from(column.taskIds);
+      const newTaskIds = Array.from(column.tweetIds);
       newTaskIds.splice(source.index, 1);
       newTaskIds.splice(destination.index, 0, draggableId);
 
       //check if its being moved within saved list
-      if (start.id === 'column-2') {
-        const {tasks} = this.state;
-        const savedTasks = {};
-        newTaskIds.forEach(id => savedTasks[id] = tasks[id])
+      if (start.id === 'saved') {
+        const {tweets} = this.state;
+        const savedTweets = {};
+        newTaskIds.forEach(id => savedTweets[id] = tweets[id])
 
         const stringifyIds = JSON.stringify(newTaskIds);
-        const stringifyTasks = JSON.stringify(savedTasks);
+        const stringifyTasks = JSON.stringify(savedTweets);
 
         localStorage.setItem('savedIds', stringifyIds);
-        localStorage.setItem('savedTasks', stringifyTasks);
+        localStorage.setItem('savedTweets', stringifyTasks);
       }
 
       const newColumn = {
         ...column,
-        taskIds: newTaskIds
+        tweetIds: newTaskIds
       };
 
       const newState = {
@@ -99,42 +85,42 @@ class App extends React.Component {
     } else {
 
       //case where item is being moved between lists
-      const startTaskIds = Array.from(start.taskIds);
+      const startTaskIds = Array.from(start.tweetIds);
       startTaskIds.splice(source.index, 1);
 
       const newStart = {
         ...start,
-        taskIds: startTaskIds
+        tweetIds: startTaskIds
       };
 
-      const finishTaskIds = Array.from(finish.taskIds);
+      const finishTaskIds = Array.from(finish.tweetIds);
       finishTaskIds.splice(destination.index, 0, draggableId);
 
       const newFinish = {
         ...finish,
-        taskIds: finishTaskIds
+        tweetIds: finishTaskIds
       };
 
-      const {tasks} = this.state;
+      const {tweets} = this.state;
       // case where items are being removed from saved column
-      if (start.id === 'column-2') {
-        const savedTasks = {};
-        startTaskIds.forEach(id => savedTasks[id] = tasks[id])
+      if (start.id === 'saved') {
+        const savedTweets = {};
+        startTaskIds.forEach(id => savedTweets[id] = tweets[id])
 
         const stringifyIds = JSON.stringify(startTaskIds);
-        const stringifyTasks = JSON.stringify(savedTasks);
+        const stringifyTasks = JSON.stringify(savedTweets);
 
         localStorage.setItem('savedIds', stringifyIds);
-        localStorage.setItem('savedTasks', stringifyTasks);
+        localStorage.setItem('savedTweets', stringifyTasks);
       } else {
-        const savedTasks = {};
-        finishTaskIds.forEach(id => savedTasks[id] = tasks[id])
+        const savedTweets = {};
+        finishTaskIds.forEach(id => savedTweets[id] = tweets[id])
 
         const stringifyIds = JSON.stringify(finishTaskIds);
-        const stringifyTasks = JSON.stringify(savedTasks);
+        const stringifyTasks = JSON.stringify(savedTweets);
 
         localStorage.setItem('savedIds', stringifyIds);
-        localStorage.setItem('savedTasks', stringifyTasks);
+        localStorage.setItem('savedTweets', stringifyTasks);
       }
 
       const newState = {
@@ -150,44 +136,25 @@ class App extends React.Component {
   };
 
   readSavedTweets = () => {
-    //init some tasks
-    // const mockTasks = {
-    //   "task-1": { id: "task-1", content: "something-1" },
-    //   "task-2": { id: "task-2", content: "something-2" },
-    //   "task-3": { id: "task-3", content: "something-3" },
-    //   "task-4": { id: "task-4", content: "something-4" },
-    //   "task-5": { id: "task-5", content: "something-5" }
-    // };
-    // localStorage.setItem('savedTasks', JSON.stringify(mockTasks));
-
     //read saved tweets from local storage
     new Promise(resolve => {
-      setTimeout(() => {
-        const tasks = JSON.parse(localStorage.getItem('savedTasks'));
+        const tweets = JSON.parse(localStorage.getItem('savedTweets'));
         const tasksIds = JSON.parse(localStorage.getItem('savedIds'));
-        resolve({tasks, tasksIds})
-      }, 500);
-    }).then(({tasks, tasksIds}) => {
+        resolve({tweets, tasksIds})
+    }).then(({tweets, tasksIds}) => {
 
       const savedIds = tasksIds || [];
 
       const savedColumn = {
-        ...this.state.columns["column-2"],
-        taskIds: savedIds
-      };
-
-      const regColumn = {
-        ...this.state.columns["column-1"],
-        taskIds:[]
-        // taskIds: Object.keys(tasks).filter(key => !savedIds.includes(key))
+        ...this.state.columns["saved"],
+        tweetIds: savedIds
       };
 
       this.setState({
-        tasks: { ...tasks },
+        tweets: { ...tweets },
         columns: {
           ...this.state.columns,
-          "column-1": regColumn,
-          "column-2": savedColumn,
+          "saved": savedColumn,
         }
       });
     });
@@ -198,34 +165,18 @@ class App extends React.Component {
   }
 
   onSearch = (phrase) => {
-    fetch('/api/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query: phrase }),
-    }).then(res => res.json())
-    .then(({data = {}}) => {
-      const { statuses = [] } = data;
-      const tasks = {};
-      statuses.map(status => {
-        const {id_str: id, text: content} = status;
-        return {
-          id,
-          content,
-        }
-      }).forEach(status => tasks[status.id] = status)
-
+    searchTweet(phrase)
+    .then((tweets = {}) => {
       const newState = {
-        tasks: {
-          ...this.state.tasks,
-          ...tasks
+        tweets: {
+          ...this.state.tweets,
+          ...tweets
         },
         columns: {
           ...this.state.columns,
-          'column-1': {
-            ...this.state.columns['column-1'],
-            taskIds: Object.keys(tasks),
+          'tweets': {
+            ...this.state.columns['tweets'],
+            tweetIds: Object.keys(tweets),
           }
         }
       }
@@ -246,17 +197,16 @@ class App extends React.Component {
         <Container>
           {this.state.columnOrder.map(columnId => {
             const { [columnId]: column } = this.state.columns;
-            const tasks = column.taskIds.map(
-              taskId => this.state.tasks[taskId]
+            const tweets = column.tweetIds.map(
+              taskId => this.state.tweets[taskId]
             );
 
             const props = {
               key: column.id,
               column,
-              tasks,
-              ...(column.id === 'column-1' && {onSearch: this.onSearch})
+              tweets,
+              ...(column.id === 'tweets' && {onSearch: this.onSearch})
             }
-            // return column.title;
             return <Column {...props}/>;
           })}
         </Container>

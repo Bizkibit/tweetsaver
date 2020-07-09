@@ -1,10 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+require('dotenv').config()
 const Twit = require('twit');
 
 const config = {
-    consumer_key:   'EBgasgZhLs3QZfq8nzx6VX96p'
-  , consumer_secret:    'z3mKwwyTmCWZpVeBAlnnPgpZDm4UvQxQw0E3kG3Y77H97J4JFM'
+    consumer_key:   process.env.CONSUMER_KEY || ''
+  , consumer_secret:    process.env.CONSUMER_SECRET || ''
   , app_only_auth:        true
 }
 const twit = new Twit(config);

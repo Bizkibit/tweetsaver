@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import styled from "styled-components";
 import { DragDropContext } from "react-beautiful-dnd";
 import Column from "./components/column";
-import { searchTweet } from "./api";
+import { searchTweet, readTweets } from "./api";
 import { prepareNewColumns } from "./utils/prepareNewColumns";
 
 const Container = styled.div`
@@ -33,7 +33,7 @@ class App extends React.Component {
   //callback for handling dropping action
   onDragEnd = result => {
     const { destination, source } = result;
-    const { columns, tweets } = this.state;
+    const { columns } = this.state;
 
     //case the destination of drag is outside of a draggable
     if (!destination) {
@@ -65,40 +65,23 @@ class App extends React.Component {
     this.setState(newState);
 
     //saving new tweet ids 
-    //currently tweet obj are being saved so it can be read on init
-    //it can be removed once the init read tweets is implemented.
     if (
       destination.droppableId === "saved" ||
       destination.droppableId !== source.droppableId
     ) {
-      const savedTweets = {};
-      newTweetIds.forEach(id => (savedTweets[id] = tweets[id]));
-
       const stringifyIds = JSON.stringify(newTweetIds);
-      const stringifyTweets = JSON.stringify(savedTweets);
-
       localStorage.setItem("savedIds", stringifyIds);
-      localStorage.setItem("savedTweets", stringifyTweets);
     }
   };
 
   readSavedTweets = () => {
-    //read saved tweets from local storage
-    //currently the tweet objects are being saved and read from localStorage
-    //this can be furthere optimized to only save the tweetids and on init a
-    // api call to be made to retrieve these tweets and update the state.
-    new Promise(resolve => {
-      const tweets = JSON.parse(localStorage.getItem("savedTweets"));
-      const tweetIds = JSON.parse(localStorage.getItem("savedIds"));
-      resolve({ tweets, tweetIds });
-    }).then(({ tweets, tweetIds }) => {
-      const savedIds = tweetIds || [];
-
+    const tweetIds = JSON.parse(localStorage.getItem("savedIds"));
+    const savedIds = tweetIds || [];
+    readTweets(savedIds).then(tweets => {
       const savedColumn = {
         ...this.state.columns["saved"],
         tweetIds: savedIds
       };
-
       this.setState({
         tweets: { ...tweets },
         columns: {
@@ -106,7 +89,7 @@ class App extends React.Component {
           saved: savedColumn
         }
       });
-    });
+    })
   };
 
   componentDidMount() {

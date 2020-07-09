@@ -16,9 +16,16 @@ const port = process.env.PORT || 5000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post('/api/', (req, res) => {
+app.post('/api/search', (req, res) => {
     const {body: {query: q} = {}} = req;
     twit.get('search/tweets', { q, count: 10, result_type: 'recent' }, function(err, data, response) {
+        res.send({ data })
+    })
+  });
+
+  app.post('/api/readTweets', (req, res) => {
+    const {body: {ids = []} = {}} = req;
+    twit.get('statuses/lookup', { id: ids}, function(err, data, response) {
         res.send({ data })
     })
   });

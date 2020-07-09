@@ -9,6 +9,7 @@ import { prepareNewColumns } from "./utils/prepareNewColumns";
 const Container = styled.div`
   display: flex;
   justify-content: center;
+  background-color: lightblue;
 `;
 
 class App extends React.Component {

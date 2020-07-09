@@ -7,6 +7,7 @@ export const Container = styled.div`
   width: 400px;
   display: flex;
   flex-direction: column;
+  background: lightgoldenrodyellow
 `;
 export const Title = styled.h3`
   padding: 8px;

@@ -8,6 +8,7 @@ import { prepareNewColumns } from "./utils/prepareNewColumns";
 
 const Container = styled.div`
   display: flex;
+  justify-content: center;
 `;
 
 class App extends React.Component {
@@ -16,7 +17,7 @@ class App extends React.Component {
     columns: {
       tweets: {
         id: "tweets",
-        title: "Tweets",
+        title: "Search Twitter",
         tweetIds: []
       },
       saved: {

@@ -10,10 +10,10 @@ const Container = styled.div`
   background-color: white;
 `;
 
-export default class Task extends React.Component {
+export default class Tweet extends React.Component {
   render() {
     return (
-      <Draggable draggableId={this.props.task.id} index={this.props.index}>
+      <Draggable draggableId={this.props.tweet.id} index={this.props.index}>
         {/* //these are gonna be the tweets */}
         {provided => (
           <Container
@@ -21,7 +21,12 @@ export default class Task extends React.Component {
             {...provided.draggableProps}
             ref={provided.innerRef}
           >
-            {this.props.task.content}
+            <img 
+              src={this.props.tweet.pic} 
+              alt=''
+            />
+            <div>{this.props.tweet.name} <span>{`@${this.props.tweet.handle}`}</span></div>
+            {this.props.tweet.content}
           </Container>
         )}
       </Draggable>

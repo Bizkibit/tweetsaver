@@ -1,7 +1,7 @@
 import React from "react";
 import { Droppable } from "react-beautiful-dnd";
-import Task from "./task";
-import { Container, Title, TaskList, SearchBar, Btn, Input } from './styledComponents';
+import Tweet from "./tweet";
+import { Container, Title, TweetList, SearchBar, Btn, Input } from './styledComponents';
 
 
 export default class Column extends React.Component {
@@ -45,12 +45,12 @@ export default class Column extends React.Component {
           {/* the function takes a single arg: provided (obj) */}
           {provided => {
             return (
-              <TaskList {...provided.droppableProps} ref={provided.innerRef}>
-                {this.props.tweets.map((task, index) => (
-                  <Task key={task.id} task={task} index={index} />
+              <TweetList {...provided.droppableProps} ref={provided.innerRef}>
+                {this.props.tweets.map((tweet, index) => (
+                  <Tweet key={tweet.id} tweet={tweet} index={index} />
                 ))}
                 {provided.placeholder}
-              </TaskList>
+              </TweetList>
             );
           }}
         </Droppable>

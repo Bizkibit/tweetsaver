@@ -13,7 +13,7 @@ export const Title = styled.h3`
   padding: 8px;
   text-align: center;
 `;
-export const TaskList = styled.div`
+export const TweetList = styled.div`
   padding: 8px;
   flex-grow: 1;
   min-height: 100px;

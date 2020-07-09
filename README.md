@@ -13,3 +13,5 @@ to run the app, please clone and run the following commands:
 
 yarn install
 yarn dev
+
+then Open http://localhost:3000 
